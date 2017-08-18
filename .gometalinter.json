@@ -1,0 +1,26 @@
+{
+  "Linters": {
+    "errcheck": "errcheck -exclude errcheck_excludes.txt -abspath:PATH:LINE:COL:MESSAGE"
+  },
+  "Enable": [
+    "deadcode",
+    "errcheck",
+    "gas",
+    "goconst",
+    "gocyclo",
+    "golint",
+    "gotype",
+    "ineffassign",
+    "interfacer",
+    "lll",
+    "megacheck",
+    "misspell",
+    "staticcheck",
+    "structcheck",
+    "unconvert",
+    "unused",
+    "varcheck",
+    "vet",
+    "vetshadow"
+  ]
+}

@@ -1,0 +1,30 @@
+go_import_path: github.com/paultyng/resttransport
+
+language: go
+go:
+  - 1.7.6
+  - 1.8.3
+  - tip
+
+os:
+  - linux
+  - osx
+
+matrix:
+  allow_failures:
+    - go: tip
+    - os: osx
+  fast_finish: true
+
+before_install:
+  - go get -u github.com/golang/dep/cmd/dep
+  - go get -u github.com/alecthomas/gometalinter
+  - gometalinter --install
+
+install:
+  - dep ensure
+
+script:
+  - make ci
+
+sudo: false
