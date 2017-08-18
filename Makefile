@@ -1,5 +1,3 @@
-# go get github.com/robertkrimen/godocdown/godocdown
-
 NOVENDOR = $(shell go list ./... | grep -v vendor)
 
 all: codegen
