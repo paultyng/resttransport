@@ -1,4 +1,3 @@
-// Package resttransport provides a simple abstraction for REST API's that allows for simpler API implementation.
 package resttransport
 
 // Transport represents the mapping between an API and the underlying communication infrastructure.

@@ -15,7 +15,7 @@ cleancodegen:
 	rm -f README.md
 .PHONY: clean
 
-codegen: cleancodegen
+codegen: cleancodegen README.md
 	go fix $(NOVENDOR)
 .PHONY: codegen
 
