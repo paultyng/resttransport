@@ -13,7 +13,7 @@ Status](https://travis-ci.org/paultyng/resttransport.svg?branch=master)](https:/
 #### type Handler
 
 ```go
-type Handler func(RequestResponse) error
+type Handler func(context.Context, RequestResponse) error
 ```
 
 Handler represents a func that processes a RequestResponse.

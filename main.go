@@ -1,5 +1,7 @@
 package resttransport
 
+import "context"
+
 // Transport represents the mapping between an API and the underlying communication infrastructure.
 // Handlers can be registered with or without authentication. URL variable annotations should follow
 // the form `/foo/{id}` where brackets are used to denote path parameters.
@@ -46,4 +48,4 @@ type RequestResponse interface {
 }
 
 // Handler represents a func that processes a RequestResponse.
-type Handler func(RequestResponse) error
+type Handler func(context.Context, RequestResponse) error

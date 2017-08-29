@@ -4,6 +4,7 @@
 package doctransport
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -197,14 +198,14 @@ func (t *docTransport) wrapHandler(auth bool, httpMethod, path string, inner res
 
 	t.spec.Paths.Paths[path] = pi
 
-	return func(reqres resttransport.RequestResponse) error {
+	return func(ctx context.Context, reqres resttransport.RequestResponse) error {
 		wrapper := &docRequestResponse{
 			inner:        reqres,
 			op:           op,
 			docTransport: t,
 		}
 
-		return inner(wrapper)
+		return inner(ctx, wrapper)
 	}
 }
 
