@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/paultyng/resttransport"
+	"github.com/paultyng/resttransport/routename"
 )
 
 type docTransport struct {
@@ -21,6 +22,7 @@ type docTransport struct {
 	inner            resttransport.Transport
 	spec             *spec.Swagger
 	referenceStructs map[reflect.Type]bool
+	namer            routename.Namer
 }
 
 type docRequestResponse struct {
@@ -49,6 +51,7 @@ func New(inner resttransport.Transport) SwaggerTransport {
 			},
 		},
 		referenceStructs: map[reflect.Type]bool{},
+		namer:            routename.New(),
 	}
 }
 
@@ -168,7 +171,7 @@ func (t *docTransport) wrapHandler(auth bool, httpMethod, path string, inner res
 		}
 	}
 
-	id := makeOperationID(httpMethod, path)
+	id := t.namer.Name(httpMethod, path)
 	pi := t.spec.Paths.Paths[path]
 	op := getOperation(pi, httpMethod)
 

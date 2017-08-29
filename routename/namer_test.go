@@ -1,14 +1,17 @@
-package doctransport
+package routename_test
 
 import (
 	"fmt"
 	"net/http"
 	"testing"
 
+	"github.com/paultyng/resttransport/routename"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMakeOperationID(t *testing.T) {
+func TestNamerName(t *testing.T) {
+	n := routename.New()
+
 	for i, c := range []struct {
 		expected string
 		method   string
@@ -34,7 +37,7 @@ func TestMakeOperationID(t *testing.T) {
 		{"getOrder", http.MethodGet, "/orders/{orderID}"},
 	} {
 		t.Run(fmt.Sprintf("%d %s %s", i, c.method, c.path), func(t *testing.T) {
-			actual := makeOperationID(c.method, c.path)
+			actual := n.Name(c.method, c.path)
 			assert.Equal(t, c.expected, actual)
 		})
 	}
