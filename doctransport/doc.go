@@ -261,6 +261,10 @@ func (reqres *docRequestResponse) appendBodyParameter(v interface{}) error {
 	return nil
 }
 
+func (reqres *docRequestResponse) RequestHeader() http.Header {
+	return reqres.inner.RequestHeader()
+}
+
 func (reqres *docRequestResponse) BindBody(v interface{}) error {
 	err := reqres.appendBodyParameter(v)
 	if err != nil {

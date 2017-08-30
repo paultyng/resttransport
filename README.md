@@ -22,6 +22,8 @@ Handler represents a func that processes a RequestResponse.
 
 ```go
 type RequestResponse interface {
+	RequestHeader() http.Header
+
 	// BindQuery binds a struct to query string variables extracted from the requested URL.
 	BindQuery(interface{}) error
 	// BindBody binds the HTTP request body using the transports configured marshaling (which should
