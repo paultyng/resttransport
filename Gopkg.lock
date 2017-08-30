@@ -50,10 +50,10 @@
   revision = "8b1100835db5bbdae88541510f70d114b91a7e4d"
 
 [[projects]]
-  branch = "master"
   name = "github.com/labstack/echo"
   packages = ["."]
-  revision = "a26bc31e27405598717d543a49391910423074bc"
+  revision = "cec7629194fe4bf83b0c72d9a02d340c7a1468ac"
+  version = "3.2.3"
 
 [[projects]]
   name = "github.com/labstack/gommon"
@@ -142,6 +142,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0fb6a0d67d14a6bbba72f578965e1d51f4decf766eb05728e1672e8bdaefab13"
+  inputs-digest = "1b273484fee41ba2ff0b2c3ab0643734a85893d056dc31f0238ee4bd72b74355"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -35,7 +35,7 @@
 
 [[constraint]]
   name = "github.com/labstack/echo"
-  branch = "master"
+  version = "3.2.3"
 
 [[constraint]]
   name = "github.com/pkg/errors"
