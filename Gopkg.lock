@@ -80,6 +80,12 @@
   version = "v0.0.2"
 
 [[projects]]
+  name = "github.com/opentracing/opentracing-go"
+  packages = [".","log"]
+  revision = "1949ddbfd147afd4d964a9f00b24eb291e0e7c38"
+  version = "v1.0.2"
+
+[[projects]]
   name = "github.com/pkg/errors"
   packages = ["."]
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
@@ -118,7 +124,7 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = ["idna"]
+  packages = ["context","idna"]
   revision = "1c05540f6879653db88113bc4a2b70aec4bd491f"
 
 [[projects]]
@@ -142,6 +148,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1b273484fee41ba2ff0b2c3ab0643734a85893d056dc31f0238ee4bd72b74355"
+  inputs-digest = "01d0d9c04a417bbf10d251d91e50454ba696d425bb33dd89df9b37ba5c121a9b"
   solver-name = "gps-cdcl"
   solver-version = 1
