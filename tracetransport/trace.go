@@ -65,10 +65,10 @@ func (t *tracingTransport) wrapHandler(httpMethod, path string, inner resttransp
 }
 
 // InjectHTTP propagates tracing headers to child HTTP requests.
-func InjectHTTP(ctx context.Context, outbound *http.Request) {
+func InjectHTTP(ctx context.Context, headers http.Header) {
 	span := opentracing.SpanFromContext(ctx)
 	if span != nil {
-		span.Tracer().Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(outbound.Header))
+		span.Tracer().Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(headers))
 	}
 }
 
