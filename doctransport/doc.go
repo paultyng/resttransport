@@ -4,6 +4,7 @@
 package doctransport
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -13,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/paultyng/resttransport"
+	"github.com/paultyng/resttransport/routename"
 )
 
 type docTransport struct {
@@ -20,6 +22,7 @@ type docTransport struct {
 	inner            resttransport.Transport
 	spec             *spec.Swagger
 	referenceStructs map[reflect.Type]bool
+	namer            routename.Namer
 }
 
 type docRequestResponse struct {
@@ -48,6 +51,7 @@ func New(inner resttransport.Transport) SwaggerTransport {
 			},
 		},
 		referenceStructs: map[reflect.Type]bool{},
+		namer:            routename.New(),
 	}
 }
 
@@ -167,7 +171,7 @@ func (t *docTransport) wrapHandler(auth bool, httpMethod, path string, inner res
 		}
 	}
 
-	id := makeOperationID(httpMethod, path)
+	id := t.namer.Name(httpMethod, path)
 	pi := t.spec.Paths.Paths[path]
 	op := getOperation(pi, httpMethod)
 
@@ -197,14 +201,14 @@ func (t *docTransport) wrapHandler(auth bool, httpMethod, path string, inner res
 
 	t.spec.Paths.Paths[path] = pi
 
-	return func(reqres resttransport.RequestResponse) error {
+	return func(ctx context.Context, reqres resttransport.RequestResponse) error {
 		wrapper := &docRequestResponse{
 			inner:        reqres,
 			op:           op,
 			docTransport: t,
 		}
 
-		return inner(wrapper)
+		return inner(ctx, wrapper)
 	}
 }
 
@@ -255,6 +259,10 @@ func (reqres *docRequestResponse) appendBodyParameter(v interface{}) error {
 		},
 	})
 	return nil
+}
+
+func (reqres *docRequestResponse) RequestHeader() http.Header {
+	return reqres.inner.RequestHeader()
 }
 
 func (reqres *docRequestResponse) BindBody(v interface{}) error {

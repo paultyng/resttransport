@@ -2,6 +2,8 @@
 package echotransport
 
 import (
+	"net/http"
+
 	"github.com/gorilla/schema"
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
@@ -67,6 +69,10 @@ type echoRequestResponse struct {
 	c       echo.Context
 }
 
+func (rr *echoRequestResponse) RequestHeader() http.Header {
+	return rr.c.Request().Header
+}
+
 func (rr *echoRequestResponse) BindQuery(v interface{}) error {
 	q := rr.c.QueryParams()
 	return queryDecoder.Decode(v, q)
@@ -103,7 +109,7 @@ func (t *echoTransport) echoHandlerWrapper(h resttransport.Handler) echo.Handler
 			c:       c,
 			userKey: t.userKey,
 		}
-		return h(reqresp)
+		return h(c.Request().Context(), reqresp)
 	}
 }
 

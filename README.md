@@ -13,7 +13,7 @@ Status](https://travis-ci.org/paultyng/resttransport.svg?branch=master)](https:/
 #### type Handler
 
 ```go
-type Handler func(RequestResponse) error
+type Handler func(context.Context, RequestResponse) error
 ```
 
 Handler represents a func that processes a RequestResponse.
@@ -22,6 +22,8 @@ Handler represents a func that processes a RequestResponse.
 
 ```go
 type RequestResponse interface {
+	RequestHeader() http.Header
+
 	// BindQuery binds a struct to query string variables extracted from the requested URL.
 	BindQuery(interface{}) error
 	// BindBody binds the HTTP request body using the transports configured marshaling (which should

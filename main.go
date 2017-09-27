@@ -1,5 +1,10 @@
 package resttransport
 
+import (
+	"context"
+	"net/http"
+)
+
 // Transport represents the mapping between an API and the underlying communication infrastructure.
 // Handlers can be registered with or without authentication. URL variable annotations should follow
 // the form `/foo/{id}` where brackets are used to denote path parameters.
@@ -27,6 +32,8 @@ type Transport interface {
 //		// use pathParams.ID, queryParams.Page, etc...
 //	}
 type RequestResponse interface {
+	RequestHeader() http.Header
+
 	// BindQuery binds a struct to query string variables extracted from the requested URL.
 	BindQuery(interface{}) error
 	// BindBody binds the HTTP request body using the transports configured marshaling (which should
@@ -46,4 +53,4 @@ type RequestResponse interface {
 }
 
 // Handler represents a func that processes a RequestResponse.
-type Handler func(RequestResponse) error
+type Handler func(context.Context, RequestResponse) error

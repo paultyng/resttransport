@@ -1,8 +1,26 @@
-package doctransport
+package routename
 
 import "strings"
 
-func makeOperationID(httpMethod, path string) string {
+type Namer interface {
+	Name(httpMethod, path string) string
+}
+
+type namer struct {
+	methodOverride map[string]string
+}
+
+func New() Namer {
+	return &namer{
+		methodOverride: map[string]string{
+			"patch": "update",
+			"post":  "create",
+			"put":   "update",
+		},
+	}
+}
+
+func (rn *namer) Name(httpMethod, path string) string {
 	httpMethod = strings.ToLower(httpMethod)
 	path = strings.TrimPrefix(path, "/")
 	path = strings.TrimSuffix(path, "/")
