@@ -57,8 +57,8 @@ func New(inner resttransport.Transport) SwaggerTransport {
 
 func (t *docTransport) Generate() (*spec.Swagger, error) {
 	t.Lock()
+	defer t.Unlock()
 	swagger := *t.spec
-	t.Unlock()
 
 	// TODO: support additional auth types
 	swagger.SecurityDefinitions = spec.SecurityDefinitions{
@@ -113,9 +113,6 @@ func addStructs(structs map[reflect.Type]bool, t reflect.Type) {
 }
 
 func (t *docTransport) addReferenceStruct(ref reflect.Type) {
-	t.Lock()
-	defer t.Unlock()
-
 	addStructs(t.referenceStructs, ref)
 }
 
@@ -162,9 +159,6 @@ func setOperation(pi *spec.PathItem, httpMethod string, op *spec.Operation) {
 }
 
 func (t *docTransport) wrapHandler(auth bool, httpMethod, path string, inner resttransport.Handler) resttransport.Handler {
-	t.Lock()
-	defer t.Unlock()
-
 	if t.spec.Paths == nil {
 		t.spec.Paths = &spec.Paths{
 			Paths: map[string]spec.PathItem{},
@@ -213,16 +207,18 @@ func (t *docTransport) wrapHandler(auth bool, httpMethod, path string, inner res
 }
 
 func (t *docTransport) RegisterHandler(httpMethod, path string, h resttransport.Handler) error {
+	t.Lock()
+	defer t.Unlock()
 	return t.inner.RegisterHandler(httpMethod, path, t.wrapHandler(false, httpMethod, path, h))
 }
 
 func (t *docTransport) RegisterAuthenticatedHandler(httpMethod, path string, h resttransport.Handler) error {
+	t.Lock()
+	defer t.Unlock()
 	return t.inner.RegisterAuthenticatedHandler(httpMethod, path, t.wrapHandler(true, httpMethod, path, h))
 }
 
 func (reqres *docRequestResponse) hasBodyParameter() bool {
-	reqres.Lock()
-	defer reqres.Unlock()
 	for _, p := range reqres.op.Parameters {
 		if p.In == "body" {
 			return true
@@ -247,8 +243,6 @@ func (reqres *docRequestResponse) appendBodyParameter(v interface{}) error {
 		return errors.Wrap(err, "unable to map type for schema")
 	}
 
-	reqres.Lock()
-	defer reqres.Unlock()
 	reqres.op.Parameters = append(reqres.op.Parameters, spec.Parameter{
 		ParamProps: spec.ParamProps{
 			In:          in,
@@ -266,7 +260,11 @@ func (reqres *docRequestResponse) RequestHeader() http.Header {
 }
 
 func (reqres *docRequestResponse) BindBody(v interface{}) error {
-	err := reqres.appendBodyParameter(v)
+	err := func() error {
+		reqres.Lock()
+		defer reqres.Unlock()
+		return reqres.appendBodyParameter(v)
+	}()
 	if err != nil {
 		return errors.Wrap(err, "unable to append body parameter")
 	}
@@ -275,7 +273,11 @@ func (reqres *docRequestResponse) BindBody(v interface{}) error {
 
 func (reqres *docRequestResponse) BindQuery(v interface{}) error {
 	const in = "query"
-	err := reqres.appendSimpleSchemaParameters(in, v)
+	err := func() error {
+		reqres.Lock()
+		defer reqres.Unlock()
+		return reqres.appendSimpleSchemaParameters(in, v)
+	}()
 	if err != nil {
 		return err
 	}
@@ -284,7 +286,11 @@ func (reqres *docRequestResponse) BindQuery(v interface{}) error {
 
 func (reqres *docRequestResponse) BindPath(v interface{}) error {
 	const in = "path"
-	err := reqres.appendSimpleSchemaParameters(in, v)
+	err := func() error {
+		reqres.Lock()
+		defer reqres.Unlock()
+		return reqres.appendSimpleSchemaParameters(in, v)
+	}()
 	if err != nil {
 		return err
 	}
@@ -292,9 +298,6 @@ func (reqres *docRequestResponse) BindPath(v interface{}) error {
 }
 
 func (reqres *docRequestResponse) appendSimpleSchemaParameters(in string, v interface{}) error {
-	reqres.Lock()
-	defer reqres.Unlock()
-
 	t := reflect.TypeOf(v)
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
@@ -338,23 +341,30 @@ func (reqres *docRequestResponse) User() interface{} {
 func (reqres *docRequestResponse) Body(status int, v interface{}) error {
 	t := reflect.TypeOf(v)
 
-	reqres.addReferenceStruct(t)
+	err := func() error {
+		reqres.Lock()
+		defer reqres.Unlock()
 
-	typeSchema, err := schema(t, true)
+		reqres.addReferenceStruct(t)
+
+		typeSchema, err := schema(t, true)
+		if err != nil {
+			return errors.Wrap(err, "unable to map type for operation request")
+		}
+
+		resp := spec.Response{
+			ResponseProps: spec.ResponseProps{
+				Description: http.StatusText(status),
+				Schema:      &typeSchema,
+			},
+		}
+
+		reqres.op.Responses.StatusCodeResponses[status] = resp
+		return nil
+	}()
 	if err != nil {
-		return errors.Wrap(err, "unable to map type for operation request")
+		return err
 	}
-
-	resp := spec.Response{
-		ResponseProps: spec.ResponseProps{
-			Description: http.StatusText(status),
-			Schema:      &typeSchema,
-		},
-	}
-
-	reqres.Lock()
-	defer reqres.Unlock()
-	reqres.op.Responses.StatusCodeResponses[status] = resp
 
 	return reqres.inner.Body(status, v)
 }
@@ -366,9 +376,11 @@ func (reqres *docRequestResponse) NoBody(status int) error {
 		},
 	}
 
-	reqres.Lock()
-	defer reqres.Unlock()
-	reqres.op.Responses.StatusCodeResponses[status] = resp
+	func() {
+		reqres.Lock()
+		defer reqres.Unlock()
+		reqres.op.Responses.StatusCodeResponses[status] = resp
+	}()
 
 	return reqres.inner.NoBody(status)
 }
