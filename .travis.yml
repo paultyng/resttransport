@@ -2,7 +2,7 @@ go_import_path: github.com/paultyng/resttransport
 
 language: go
 go:
-  - 1.8.3
+  - 1.8
   - 1.9
   - tip
 
