@@ -2,11 +2,8 @@ package tracetransport
 
 import (
 	"context"
-	"net/http"
 
-	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
-	"github.com/opentracing/opentracing-go/log"
+	"cloud.google.com/go/trace"
 	"github.com/pkg/errors"
 
 	"github.com/paultyng/resttransport"
@@ -16,11 +13,11 @@ import (
 type tracingTransport struct {
 	inner  resttransport.Transport
 	namer  routename.Namer
-	tracer opentracing.Tracer
+	tracer *trace.Client
 }
 
 // New returns a new instance of a resttransport that implements opentracing.
-func New(tracer opentracing.Tracer, inner resttransport.Transport) resttransport.Transport {
+func New(tracer *trace.Client, inner resttransport.Transport) resttransport.Transport {
 	return &tracingTransport{
 		inner:  inner,
 		namer:  routename.New(),
@@ -36,40 +33,28 @@ func (t *tracingTransport) RegisterAuthenticatedHandler(httpMethod, path string,
 	return t.inner.RegisterAuthenticatedHandler(httpMethod, path, t.wrapHandler(httpMethod, path, h))
 }
 
+// https://github.com/GoogleCloudPlatform/google-cloud-go/blob/32a444f1bdd6d9313e6c82d90e66b599a2caa285/trace/trace.go#L171
+const (
+	httpHeader = `X-Cloud-Trace-Context`
+)
+
 func (t *tracingTransport) wrapHandler(httpMethod, path string, inner resttransport.Handler) resttransport.Handler {
 	return func(ctx context.Context, reqres resttransport.RequestResponse) error {
-		wireContext, _ := t.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(reqres.RequestHeader()))
-
 		spanName := t.namer.Name(httpMethod, path)
-		span := t.tracer.StartSpan(
-			spanName,
-			ext.RPCServerOption(wireContext),
-		)
+		span := t.tracer.SpanFromHeader(spanName, reqres.RequestHeader().Get(httpHeader))
 		defer span.Finish()
 
-		ext.HTTPUrl.Set(span, path)
-		ext.HTTPMethod.Set(span, httpMethod)
+		span.SetLabel(trace.LabelHTTPMethod, httpMethod)
+		span.SetLabel(trace.LabelHTTPURL, path)
 
-		ctx = opentracing.ContextWithSpan(ctx, span)
+		ctx = trace.NewContext(ctx, span)
 
 		err := inner(ctx, reqres)
 		if err != nil {
-			span.LogFields(
-				log.String("err", err.Error()),
-				log.String("cause", errors.Cause(err).Error()),
-			)
+			span.SetLabel("err", err.Error())
+			span.SetLabel("cause", errors.Cause(err).Error())
 		}
 
 		return err
 	}
 }
-
-// InjectHTTP propagates tracing headers to child HTTP requests.
-func InjectHTTP(ctx context.Context, headers http.Header) {
-	span := opentracing.SpanFromContext(ctx)
-	if span != nil {
-		span.Tracer().Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(headers))
-	}
-}
-
-//TODO: InjectGRPC, see https://github.com/go-kit/kit/blob/master/tracing/opentracing/grpc.go
