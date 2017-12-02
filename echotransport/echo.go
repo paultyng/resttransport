@@ -2,6 +2,7 @@
 package echotransport
 
 import (
+	"mime/multipart"
 	"net/http"
 
 	"github.com/gorilla/schema"
@@ -14,11 +15,13 @@ import (
 var (
 	pathDecoder  = schema.NewDecoder()
 	queryDecoder = schema.NewDecoder()
+	formDecoder  = schema.NewDecoder()
 )
 
 func init() {
 	pathDecoder.SetAliasTag("path")
 	queryDecoder.SetAliasTag("query")
+	formDecoder.SetAliasTag("formData")
 }
 
 type echoTransport struct {
@@ -82,6 +85,14 @@ func (rr *echoRequestResponse) BindBody(v interface{}) error {
 	return rr.c.Bind(v)
 }
 
+func (rr *echoRequestResponse) BindMultipart(v interface{}) error {
+	form, err := rr.c.MultipartForm()
+	if err != nil {
+		return err
+	}
+	return formDecoder.Decode(v, form.Value)
+}
+
 func (rr *echoRequestResponse) BindPath(v interface{}) error {
 	values := map[string][]string{}
 	for _, n := range rr.c.ParamNames() {
@@ -103,6 +114,10 @@ func (rr *echoRequestResponse) User() interface{} {
 	return rr.c.Get(rr.userKey)
 }
 
+func (rr *echoRequestResponse) FormFile(name string) (*multipart.FileHeader, error) {
+	return rr.c.FormFile(name)
+}
+
 func (t *echoTransport) echoHandlerWrapper(h resttransport.Handler) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		reqresp := &echoRequestResponse{
@@ -113,11 +128,11 @@ func (t *echoTransport) echoHandlerWrapper(h resttransport.Handler) echo.Handler
 	}
 }
 
-func (t *echoTransport) RegisterHandler(httpMethod, path string, h resttransport.Handler) error {
+func (t *echoTransport) RegisterHandler(httpMethod, path string, consumes []string, h resttransport.Handler) error {
 	return t.register(httpMethod, replacePathParameters(path), h)
 }
 
-func (t *echoTransport) RegisterAuthenticatedHandler(httpMethod, path string, h resttransport.Handler) error {
+func (t *echoTransport) RegisterAuthenticatedHandler(httpMethod, path string, consumes []string, h resttransport.Handler) error {
 	return t.register(httpMethod, replacePathParameters(path), h, t.authenticationMiddleware...)
 }
 

@@ -2,6 +2,7 @@ package resttransport
 
 import (
 	"context"
+	"mime/multipart"
 	"net/http"
 )
 
@@ -9,8 +10,8 @@ import (
 // Handlers can be registered with or without authentication. URL variable annotations should follow
 // the form `/foo/{id}` where brackets are used to denote path parameters.
 type Transport interface {
-	RegisterHandler(httpMethod, path string, h Handler) error
-	RegisterAuthenticatedHandler(httpMethod, path string, h Handler) error
+	RegisterHandler(httpMethod, path string, consumes []string, h Handler) error
+	RegisterAuthenticatedHandler(httpMethod, path string, consumes []string, h Handler) error
 }
 
 // RequestResponse represents the handlers contract for reading request data and responding. Both
@@ -42,8 +43,14 @@ type RequestResponse interface {
 	// BindPath binds a struct to path variables extracted from the requested URL.
 	BindPath(interface{}) error
 
+	// BindMultipart binds a struct to multipart formdata
+	BindMultipart(interface{}) error
+
 	// User returns current user state/context (differs based on transport implementations).
 	User() interface{}
+
+	// FormFile retrieves a file from formData
+	FormFile(name string) (*multipart.FileHeader, error)
 
 	// Body sends a response body with the given status code. The type of marshaling will be decided
 	// by the transport.

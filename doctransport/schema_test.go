@@ -2,6 +2,7 @@ package doctransport
 
 import (
 	"fmt"
+	"mime/multipart"
 	"reflect"
 	"testing"
 	"time"
@@ -105,6 +106,7 @@ func TestSchema(t *testing.T) {
 		{"number", "double", reflect.TypeOf(float64(0))},
 		{"string", "", reflect.TypeOf(string(0))},
 		{"string", "date-time", reflect.TypeOf(time.Time{})},
+		{"file", "", reflect.TypeOf(multipart.FileHeader{})},
 	}
 
 	for i, c := range cases {
