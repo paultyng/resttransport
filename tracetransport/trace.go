@@ -25,12 +25,12 @@ func New(tracer *trace.Client, inner resttransport.Transport) resttransport.Tran
 	}
 }
 
-func (t *tracingTransport) RegisterHandler(httpMethod, path string, h resttransport.Handler) error {
-	return t.inner.RegisterHandler(httpMethod, path, t.wrapHandler(httpMethod, path, h))
+func (t *tracingTransport) RegisterHandler(httpMethod, path string, consumes []string, h resttransport.Handler) error {
+	return t.inner.RegisterHandler(httpMethod, path, consumes, t.wrapHandler(httpMethod, path, h))
 }
 
-func (t *tracingTransport) RegisterAuthenticatedHandler(httpMethod, path string, h resttransport.Handler) error {
-	return t.inner.RegisterAuthenticatedHandler(httpMethod, path, t.wrapHandler(httpMethod, path, h))
+func (t *tracingTransport) RegisterAuthenticatedHandler(httpMethod, path string, consumes []string, h resttransport.Handler) error {
+	return t.inner.RegisterAuthenticatedHandler(httpMethod, path, consumes, t.wrapHandler(httpMethod, path, h))
 }
 
 // https://github.com/GoogleCloudPlatform/google-cloud-go/blob/32a444f1bdd6d9313e6c82d90e66b599a2caa285/trace/trace.go#L171
