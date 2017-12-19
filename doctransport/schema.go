@@ -1,6 +1,7 @@
 package doctransport
 
 import (
+	"mime/multipart"
 	"reflect"
 	"time"
 
@@ -13,7 +14,8 @@ const bearerTokenAuthorizationName = "Bearer"
 
 // well known types
 var (
-	wkTime = reflect.TypeOf(time.Time{})
+	wkTime                = reflect.TypeOf(time.Time{})
+	wkMultipartFileHeader = reflect.TypeOf(multipart.FileHeader{})
 )
 
 func primitiveSchema(jsonSchemaType, format string) (spec.Schema, error) {
@@ -167,8 +169,11 @@ func schema(t reflect.Type, ref bool) (spec.Schema, error) {
 		reflect.Slice:
 		return arraySchema(t, ref)
 	case reflect.Struct:
-		if t == wkTime {
+		switch t {
+		case wkTime:
 			return primitiveSchema("string", "date-time")
+		case wkMultipartFileHeader:
+			return primitiveSchema("file", "")
 		}
 		if ref {
 			return refSchema(t)
