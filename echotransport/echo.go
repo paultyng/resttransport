@@ -100,6 +100,11 @@ func (rr *echoRequestResponse) NoBody(status int) error {
 	return rr.c.NoContent(status)
 }
 
+func (rr *echoRequestResponse) Attachment(file, name, contentType string) error {
+	rr.c.Response().Header().Set("Content-Type", contentType)
+	return rr.c.Attachment(file, name)
+}
+
 func (rr *echoRequestResponse) User() interface{} {
 	return rr.c.Get(rr.userKey)
 }

@@ -361,6 +361,43 @@ func (reqres *docRequestResponse) FormFile(name string) (*multipart.FileHeader, 
 	return reqres.inner.FormFile(name)
 }
 
+func (reqres *docRequestResponse) Attachment(file, name, contentType string) error {
+	resp := spec.Response{
+		ResponseProps: spec.ResponseProps{
+			Description: http.StatusText(200),
+			Schema: &spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Type: spec.StringOrArray([]string{"file"}),
+				},
+			},
+			Headers: map[string]spec.Header{
+				"Content-Type": spec.Header{
+					SimpleSchema: spec.SimpleSchema{
+						Type: "string",
+					},
+					HeaderProps: spec.HeaderProps{
+						Description: fmt.Sprintf("%s; charset=utf-8", contentType),
+					},
+				},
+				"Content-Disposition": spec.Header{
+					SimpleSchema: spec.SimpleSchema{
+						Type: "string",
+					},
+					HeaderProps: spec.HeaderProps{
+						Description: fmt.Sprintf("attachment; filename=%s", name),
+					},
+				},
+			},
+		},
+	}
+	func() {
+		reqres.Lock()
+		defer reqres.Unlock()
+		reqres.op.Responses.StatusCodeResponses[200] = resp
+	}()
+	return reqres.inner.Attachment(file, name, contentType)
+}
+
 func (reqres *docRequestResponse) Body(status int, v interface{}) error {
 	t := reflect.TypeOf(v)
 
