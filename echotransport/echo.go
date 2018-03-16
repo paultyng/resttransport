@@ -2,6 +2,7 @@
 package echotransport
 
 import (
+	"mime/multipart"
 	"net/http"
 
 	"github.com/gorilla/schema"
@@ -103,6 +104,10 @@ func (rr *echoRequestResponse) User() interface{} {
 	return rr.c.Get(rr.userKey)
 }
 
+func (rr *echoRequestResponse) FormFile(name string) (*multipart.FileHeader, error) {
+	return rr.c.FormFile(name)
+}
+
 func (t *echoTransport) echoHandlerWrapper(h resttransport.Handler) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		reqresp := &echoRequestResponse{
@@ -113,11 +118,11 @@ func (t *echoTransport) echoHandlerWrapper(h resttransport.Handler) echo.Handler
 	}
 }
 
-func (t *echoTransport) RegisterHandler(httpMethod, path string, h resttransport.Handler) error {
+func (t *echoTransport) RegisterHandler(httpMethod, path string, consumes []string, h resttransport.Handler) error {
 	return t.register(httpMethod, replacePathParameters(path), h)
 }
 
-func (t *echoTransport) RegisterAuthenticatedHandler(httpMethod, path string, h resttransport.Handler) error {
+func (t *echoTransport) RegisterAuthenticatedHandler(httpMethod, path string, consumes []string, h resttransport.Handler) error {
 	return t.register(httpMethod, replacePathParameters(path), h, t.authenticationMiddleware...)
 }
 

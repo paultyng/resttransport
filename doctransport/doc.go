@@ -6,6 +6,7 @@ package doctransport
 import (
 	"context"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"reflect"
 	"sync"
@@ -158,7 +159,7 @@ func setOperation(pi *spec.PathItem, httpMethod string, op *spec.Operation) {
 	}
 }
 
-func (t *docTransport) wrapHandler(auth bool, httpMethod, path string, inner resttransport.Handler) resttransport.Handler {
+func (t *docTransport) wrapHandler(auth bool, httpMethod, path string, consumes []string, inner resttransport.Handler) resttransport.Handler {
 	if t.spec.Paths == nil {
 		t.spec.Paths = &spec.Paths{
 			Paths: map[string]spec.PathItem{},
@@ -174,6 +175,7 @@ func (t *docTransport) wrapHandler(auth bool, httpMethod, path string, inner res
 			OperationProps: spec.OperationProps{
 				ID:          id,
 				Description: "",
+				Consumes:    consumes,
 				Parameters:  []spec.Parameter{},
 				Responses: &spec.Responses{
 					ResponsesProps: spec.ResponsesProps{
@@ -206,16 +208,16 @@ func (t *docTransport) wrapHandler(auth bool, httpMethod, path string, inner res
 	}
 }
 
-func (t *docTransport) RegisterHandler(httpMethod, path string, h resttransport.Handler) error {
+func (t *docTransport) RegisterHandler(httpMethod, path string, consumes []string, h resttransport.Handler) error {
 	t.Lock()
 	defer t.Unlock()
-	return t.inner.RegisterHandler(httpMethod, path, t.wrapHandler(false, httpMethod, path, h))
+	return t.inner.RegisterHandler(httpMethod, path, consumes, t.wrapHandler(false, httpMethod, path, consumes, h))
 }
 
-func (t *docTransport) RegisterAuthenticatedHandler(httpMethod, path string, h resttransport.Handler) error {
+func (t *docTransport) RegisterAuthenticatedHandler(httpMethod, path string, consumes []string, h resttransport.Handler) error {
 	t.Lock()
 	defer t.Unlock()
-	return t.inner.RegisterAuthenticatedHandler(httpMethod, path, t.wrapHandler(true, httpMethod, path, h))
+	return t.inner.RegisterAuthenticatedHandler(httpMethod, path, consumes, t.wrapHandler(true, httpMethod, path, consumes, h))
 }
 
 func (reqres *docRequestResponse) hasBodyParameter() bool {
@@ -336,6 +338,27 @@ func (reqres *docRequestResponse) appendSimpleSchemaParameters(in string, v inte
 
 func (reqres *docRequestResponse) User() interface{} {
 	return reqres.inner.User()
+}
+
+func (reqres *docRequestResponse) FormFile(name string) (*multipart.FileHeader, error) {
+	err := func() error {
+		reqres.Lock()
+		defer reqres.Unlock()
+		reqres.op.Parameters = append(reqres.op.Parameters, spec.Parameter{
+			SimpleSchema: spec.SimpleSchema{
+				Type: "file",
+			},
+			ParamProps: spec.ParamProps{
+				In:   "body",
+				Name: name,
+			},
+		})
+		return nil
+	}()
+	if err != nil {
+		return nil, err
+	}
+	return reqres.inner.FormFile(name)
 }
 
 func (reqres *docRequestResponse) Body(status int, v interface{}) error {
