@@ -49,6 +49,9 @@ type RequestResponse interface {
 	// FormFile retrieves a file (by name) from the request
 	FormFile(name string) (*multipart.FileHeader, error)
 
+	// Attachment sends `file` with filename `name` and
+	// contentType `contentType` for downloading.
+	Attachment(file, name, contentType string) error
 	// Body sends a response body with the given status code. The type of marshaling will be decided
 	// by the transport.
 	Body(status int, body interface{}) error
