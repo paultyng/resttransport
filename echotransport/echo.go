@@ -105,6 +105,11 @@ func (rr *echoRequestResponse) Attachment(file, name, contentType string) error 
 	return rr.c.Attachment(file, name)
 }
 
+func (rr *echoRequestResponse) Redirect(status int, location string) error {
+	rr.c.Response().Header().Set("Location", location)
+	return rr.c.NoContent(status)
+}
+
 func (rr *echoRequestResponse) User() interface{} {
 	return rr.c.Get(rr.userKey)
 }

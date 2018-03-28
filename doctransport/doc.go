@@ -398,6 +398,29 @@ func (reqres *docRequestResponse) Attachment(file, name, contentType string) err
 	return reqres.inner.Attachment(file, name, contentType)
 }
 
+func (reqres *docRequestResponse) Redirect(status int, location string) error {
+
+	resp := spec.Response{
+		ResponseProps: spec.ResponseProps{
+			Description: http.StatusText(status),
+			Headers: map[string]spec.Header{
+				"Location": spec.Header{
+					SimpleSchema: spec.SimpleSchema{
+						Type: "string",
+					},
+				},
+			},
+		},
+	}
+
+	func() {
+		reqres.Lock()
+		defer reqres.Unlock()
+		reqres.op.Responses.StatusCodeResponses[status] = resp
+	}()
+	return reqres.inner.Redirect(status, location)
+}
+
 func (reqres *docRequestResponse) Body(status int, v interface{}) error {
 	t := reflect.TypeOf(v)
 
